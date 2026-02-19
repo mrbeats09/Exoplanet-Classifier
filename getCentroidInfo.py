@@ -3,6 +3,8 @@ import lightkurve as lk
 import numpy as np
 import os
 import shutil
+import time 
+import random 
 from tqdm import tqdm  # The progress bar library
 
 def process_targets(manifest_path="classified_targets.csv", output_path="tess_training_data.csv"):
@@ -25,8 +27,10 @@ def process_targets(manifest_path="classified_targets.csv", output_path="tess_tr
         target_sector = int(str(row['sectors']).split(',')[0]) 
         
         try:
-            # By searching for a pre-processed lightcurve, we can avoid downloading 
-            # large TPF files and performing photometry locally, which is much faster.
+            # This random sleep is to be polite to the servers and avoid hitting rate limits, especially if we have many targets. 
+            # If this isn't here, it hangs after 200 targets because of rate limiting.
+            time.sleep(random.uniform(1.5, 3.0))
+            # By searching for a pre-processed lightcurve, we can avoid downloading large TPF files and performing photometry locally, which is much faster 
             search = lk.search_lightcurve(tic_id, mission="TESS", sector=target_sector, author="SPOC", cadence="short")
             
             if len(search) > 0:
