@@ -30,12 +30,13 @@ def create_tess_csv():
         negatives = df[df['tfopwg disposition'] == 'FP'].head(250)
         
         # 3. Combine them
-        final_500 = pd.concat([positives, negatives])
+        relevant_columns = ['tic id', 'toi', 'tfopwg disposition', 'sectors']
+        final_data = pd.concat([positives, negatives])[relevant_columns]
         
         # 4. Save to CSV
-        final_500.to_csv("classified_targets.csv", index=False)
+        final_data.to_csv("classified_targets.csv", index=False)
         
-        print(f"Success! Created 'classified_targets.csv' with {len(final_500)} rows.")
+        print(f"Success! Created 'classified_targets.csv' with {len(final_data)} rows.")
         print(f"Breakdown: {len(positives)} Positive (KP/CP), {len(negatives)} Negative (FP)")
 
     except Exception as e:
