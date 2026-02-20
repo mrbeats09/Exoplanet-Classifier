@@ -16,11 +16,10 @@ def process_targets(manifest_path="classified_targets.csv", output_path="tess_tr
     final_data = []
     cache_dir = "./tpf_temp"
     os.makedirs(cache_dir, exist_ok=True)
-
-    # We wrap the manifest.iterrows() in tqdm for a visual bar
-    print(f"Initializing TESS Data Extraction Pipeline...")
     
-    # tqdm will automatically calculate the % based on the length of the manifest
+    print(f"Initializing TESS Data Extraction ipeline...P")
+    
+    # tqdm will automatically calculate the time remaining based on the length of the manifest
     for index, row in tqdm(manifest.iterrows(), total=len(manifest), desc="Processing Targets", unit="star"):
         tic_id = f"TIC {row['tic id']}"
         label = row['tfopwg disposition']
@@ -29,21 +28,19 @@ def process_targets(manifest_path="classified_targets.csv", output_path="tess_tr
         try:
             # This random sleep is to be polite to the servers and avoid hitting rate limits, especially if we have many targets. 
             # If this isn't here, it hangs after 200 targets because of rate limiting.
-            time.sleep(random.uniform(1.5, 3.0))
+            time.sleep(random.uniform(0.5, 2.0))
             # By searching for a pre-processed lightcurve, we can avoid downloading large TPF files and performing photometry locally, which is much faster 
-            search = lk.search_lightcurve(tic_id, mission="TESS", sector=target_sector, author="SPOC", cadence="short")
+            search = lk.search_lightcurve(tic_id, mission="TESS", author="SPOC", cadence="short")
             
             if len(search) > 0:
                 # Download the lightcurve file, which is much smaller and faster.
-                lc = search[0].download(download_dir=cache_dir)
+                lc = search[-1].download(download_dir=cache_dir, cutout_size=11, quality_bitmask="default")
 
-                # If download fails or file is corrupt, lc can be None.
+                # If download fails or the file is corrupt, lc can be None.
                 if lc is None:
                     continue
                 
-                # The object is already a lightcurve, so we can skip the .to_lightcurve() step.
-                
-                # Standardizing to 1000 data points for ML consistency, padding with NaN if shorter
+                # Standardizing it to 1000 data points keeps some ML consistency, padding with NaN if shorter 
                 length = 1000
                 
                 flux_orig = lc.flux.value

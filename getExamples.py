@@ -21,13 +21,16 @@ def create_tess_csv():
         # Load into pandas
         df = pd.read_csv(io.StringIO(response.text))
         
-        # 1. Clean column names (lowercase and no spaces)
+        # Clean column names (lowercase and no spaces)
         df.columns = df.columns.str.strip().str.lower()
         
-        # 2. Filter for our three specific classes
-        # 'tfopwg disposition' is the standard column name in this CSV
-        positives = df[df['tfopwg disposition'].isin(['KP', 'CP'])].head(250)
-        negatives = df[df['tfopwg disposition'] == 'FP'].head(250)
+        # To make sure that our entries are most likely in the TESS TPF 2-minute cadence library 
+        df = df[df['tess mag'] < 13] # Looks for brighter stars 
+        
+        # Filtering for the three specific classes
+        # Note | We are classifying based on the 'tfopwg disposition' column 
+        positives = df[df['tfopwg disposition'].isin(['KP', 'CP'])].head(500)
+        negatives = df[df['tfopwg disposition'] == 'FP'].head(500)
         
         # 3. Combine them
         relevant_columns = ['tic id', 'toi', 'tfopwg disposition', 'sectors']
@@ -36,8 +39,8 @@ def create_tess_csv():
         # 4. Save to CSV
         final_data.to_csv("classified_targets.csv", index=False)
         
-        print(f"Success! Created 'classified_targets.csv' with {len(final_data)} rows.")
-        print(f"Breakdown: {len(positives)} Positive (KP/CP), {len(negatives)} Negative (FP)")
+        print(f"Success! Created 'classified_targets.csv' with {len(final_data)} examples in total.")
+        print(f"Contains: {len(positives)} Positive Targets (KP/CP), {len(negatives)} Negative Targets (FP)")
 
     except Exception as e:
         print(f"An error occurred: {e}")
